@@ -1,10 +1,10 @@
-###JPA教程（基础API、Spring整合、Springboot整合）
+### JPA教程（基础API、Spring整合、Springboot整合）
 
 JPA springdata 整合jpa 根据类创建表 无则建有则更 接口增删改查操作	类比springdata整合mongdb和es等
 
 [**实例代码和资料**](https://github.com/liutaob/JPA.git)
 
-####**一、**常见注解
+#### **一、**常见注解
 
 **注解** 只有在spring或springboot环境下才可以在属性上加注解，否则强制getXX方法上加
 
@@ -29,14 +29,14 @@ JPA springdata 整合jpa 根据类创建表 无则建有则更 接口增删改�
 @OneToOne
 ~~~
 
-####**二、**实体的状态:
+#### **二、**实体的状态:
 
 * 新建状态:   新创建的对象，尚未拥有持久性主键。 new没ID
 * 游离状态：拥有持久化主键，但是没有与持久化建立上下文环境new 有ID
 * 持久化状态：已经拥有持久性主键并和持久化建立了上下文环境
 * 删除状态:  拥有持久化主键，已经和持久化建立上下文环境，但是从数据库中删除
 
-####**三、**使用JPA持久化对象的步骤
+#### **三、**使用JPA持久化对象的步骤
 1,创建 persistence.xml, 在这个文件中配置持久化单元
 	需要指定跟哪个数据库进行交互;
 	需要指定 JPA 使用哪个持久化的框架以及配置该框架的基本属性
@@ -80,10 +80,10 @@ JPA springdata 整合jpa 根据类创建表 无则建有则更 接口增删改�
 
   ​
 
-####五、一对一、一对多、多对多：单向、双向
+#### 五、一对一、一对多、多对多：单向、双向
 注意：@JoinColumn可选，会默认设置映射对象xx_id,若默认命名和该对象属性重复，则直接以映射对象名生成外键。只是可取别名	
 
-#####单向
+##### 单向
 
 单向使用一边注解即可，无需mappby，多的一方获取少的一方默认是左外连接，区别于SpringData默认接口查询方法是懒加载
 
@@ -136,7 +136,7 @@ UNSPECIFIED：默认值，JPA 产品默认值将被使用
 
 	默认一级缓存同一个管理器内 相同sql只查一次 类比mybatis缓存同一session
 	开启二级缓存 不同管理器相同sql也只查一次  类比mybatis缓存不同session  前提是配置合理
-####七、Query接口的方法	
+#### 七、Query接口的方法	
 
 getSingleResult	getResultList	setHint缓存
 
@@ -145,7 +145,7 @@ getSingleResult	getResultList	setHint缓存
 3,createNativeQuery 		 setHint			 标准sql
 4,createNativeQuery		带结果集参数		标准sql										
 
-####八、JPA操作数据的几种方式
+#### 八、JPA操作数据的几种方式
 
 1. 继承接口默认的方式，不够通过通过Query接口自定义JPQL
 
@@ -163,18 +163,18 @@ getSingleResult	getResultList	setHint缓存
 
 ### SpringData相关
 
-####一、Repository接口
+#### 一、Repository接口
 
 无任何方法，需按照规定自定义方法
 使用方式：1，继承接口 2，注解@RepositoryDefinition(domainClass=Person.class,idClass=Integer.class)+自定义方法
 
-####二、@NoRepositoryBean注解 
+#### 二、@NoRepositoryBean注解 
 
 ​    过滤创建bean 无法注入 注解标识作为中间接口，不创建代理，如JpaRepo、CrudRepo等
 
-####三、CurdRepository、PagingAndSortingRepository、JpaRepository、JpaSpecificationExecutor（分页+筛选条件）等的使用
+#### 三、CurdRepository、PagingAndSortingRepository、JpaRepository、JpaSpecificationExecutor（分页+筛选条件）等的使用
 
-###自定义JPQL
+### 自定义JPQL
 
 * ?1	第一个参数
 * :name+@Param(不加默认相同名字)第一个参数
