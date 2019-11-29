@@ -6,11 +6,14 @@ JPA springdata 整合jpa 根据类创建表 无则建有则更 接口增删改�
 
 #### **一、**常见注解
 
-**注解** 只有在spring或springboot环境下才可以在属性上加注解，否则强制getXX方法上加
+**注解** 注解加的地方需与@Id标注位置一致！！！    [注解不生效问题解决](https://blog.csdn.net/gaohe7091/article/details/63253386)
 
 ~~~
 @Entity			标志实体
 @Table			别名，默认为实体名
+@Table(appliesTo = PPayModePromGoods.Schema.TABLE_NAME, indexes = {
+    @Index(name = PPayModePromGoods.Schema.TABLE_NAME + "_x1", columnNames = {
+      "owner" }) }) hibernate包下注解索引
 @Id				必不可少 否则报错 指定主键
 @GeneratedValue（strategy，generator） mysql支持identity、oracle支持sequence、auto默认自动选择、table通过表生成
 @Column 标注的 columnDefinition 属性: 表示该字段在数据库中的实际类型 Date属性无法自动，String默认对应varchar
@@ -18,6 +21,19 @@ JPA springdata 整合jpa 根据类创建表 无则建有则更 接口增删改�
 @Basic 		表示一个简单的属性到数据库表的字段的映射,对于没有任何标注的 getXxxx() 方法,默认即为@Basic
 @Basic(fetch = FetchType.LAZY,optional = false)	懒加载、不允许为空
 @Temporal(TemporalType.TIMESTAMP) 指定日期在数据库的类型 如date--年月日，timestamp年月日时分秒
+@OrderBy 排序
+
+@Enumerated(EnumType.STRING)指定枚举、
+varchar指定length  
+number指定精度（columnDefinition = "decimal(20,10)" 或利用属性precision/scale）
+@Embedded属性注解 标注对象	+@AttributeOverrides({@AttributeOverride})起别名
+@Embeddable在上述标注类上 类注解 不生成表	
+@Lob注解：表示属性将被持久化为Blob或者Clob类型, 具体取决于属性的类型,Java.sql.Clob, Character[],char[] 和 java.lang.String这些类型的属性都被持久化为Clob类型, 而java.sql.Blob,Byte[], byte[] 和 serializable类型则被持久化为Blob类型.
+
+继承@MappedSuperclass注解的父类PStandardEntity（版本号@Version、时间、创建、最后修改）、PEntity(带uuid)
+1.@MappedSuperclass注解使用在父类上面，是用来标识父类的作用
+2.@MappedSuperclass标识的类表示其不能映射到数据库表，因为其不是一个完整的实体类，但是它所拥有的属性能够映射在     其子类对用的数据库表中
+3.@MappedSuperclass标识得类不能再有@Entity或@Table注解  但是可以使用@Id 和@Column注解
 ~~~
 
 **映射关系相关注解**  注意区分单向和双向映射
@@ -27,6 +43,18 @@ JPA springdata 整合jpa 根据类创建表 无则建有则更 接口增删改�
 @ManyToOne(fetch=FetchType.LAZY) mappedby不和上面注解一起用	默认EAGER左外连接，懒加载获取时才查两次
 @ManyToMany
 @OneToOne
+单据端
+@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "owner")
+  @OrderBy("lineNo")
+  public List<LackGoodsNoteLine> getLines() {
+    return lines;
+  }
+明细端
+@ManyToOne
+  @JoinColumn(name = "owner")
+  public LackGoodsNote getOwner() {
+    return owner;
+  }
 ~~~
 
 #### **二、**实体的状态:
@@ -58,7 +86,7 @@ JPA springdata 整合jpa 根据类创建表 无则建有则更 接口增删改�
 
   ~~~
   find/getReference 	前者不存在null，后者存在ok，不存在报错   用到对象才调用select语句查询
-  persist不能有id，更新可先查最后提交事务 或 再次调用方法
+  persist有主键策略则不能有id，更新可先查最后提交事务 或 再次调用方法/无主键策略可以有id
   remove 只能操作持久化对象，游离对象不可
   merge 临时对象没ID创建--复制属性新对象--insert		3条语句（主键查更+insert）
         游离对象有ID创建--缓存存在--复制属性新对象--update   2条sql   1条查数据库，缓存了，1条更
@@ -66,7 +94,7 @@ JPA springdata 整合jpa 根据类创建表 无则建有则更 接口增删改�
         游离对象有ID创建--缓存不存在--数据库不存在select--复制属性新对象--insert  4条（先select数	  据库，主键查更+insert)
   flush	同步上下文环境，将未保存实体同步数据库，两种模式 auto、commit
   refresh  更新数据库实体
-  clear 清除上下文环境
+  clear 清除上下文环境 一般用于后期不需使用到的持久化对象 节省内存开销
   contains 判断实例是否被上下文环境管理
   isOpen  管理器是否打开
   getTran 事务
@@ -157,6 +185,12 @@ getSingleResult	getResultList	setHint缓存
 
    **注意**：增删改必须加@Modify注解，修改删除只能返回int或void，且必须在调用方法处声明事务（SpringData提供默认接口方式不用，Spring环境中调用客户端管理器操作也要事务）
 
+#### 九、布尔类型处理
+
+* oracle数据库默认number类型
+* sqlserver若hibernate低版本不自动生成表需要手动写sql脚本设计成bit类型处理
+* mysql默认生成tinyint(1)
+
 ------
 
 
@@ -175,6 +209,8 @@ getSingleResult	getResultList	setHint缓存
 #### 三、CurdRepository、PagingAndSortingRepository、JpaRepository、JpaSpecificationExecutor（分页+筛选条件）等的使用
 
 ### 自定义JPQL
+
+[示例代码地址](https://github.com/liutaob/weixinsell/blob/master/sell/src/main/java/com/jxust/sell/repository/ProductInfoRepository.java)
 
 * ?1	第一个参数
 * :name+@Param(不加默认相同名字)第一个参数

@@ -7,7 +7,10 @@ import org.junit.Before;
 import org.junit.Test;
 
 import javax.persistence.*;
+import javax.sound.midi.Soundbank;
+import java.net.Socket;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -60,7 +63,6 @@ public class JPATest {
     @Test
     public void testJpqlFunction() {
         String jpql = "SELECT upper(c.email) FROM Customer c";
-
         List<String> emails = entityManager.createQuery(jpql).getResultList();
         System.out.println(emails);
     }
@@ -189,7 +191,6 @@ public class JPATest {
     @Test
     public void testSecondLevelCache() {
         Customer customer1 = entityManager.find(Customer.class, 1);
-
         transaction.commit();
         entityManager.close();
 
@@ -261,7 +262,7 @@ public class JPATest {
     @Test
     public void testOneToOneFind2() {
         Manager mgr = entityManager.find(Manager.class, 2);
-        System.out.println(mgr.getMgrName());
+//        System.out.println(mgr.getMgrName());
 
         System.out.println(mgr.getDept().getDeptName());
     }
@@ -429,6 +430,10 @@ public class JPATest {
 	}*/
 
     /*判断实例是否被上下文环境管理*/
+
+    /**
+     *
+     */
     @Test
     public void containsAndClear() {
         Customer customer = entityManager.find(Customer.class, 7);
@@ -442,14 +447,30 @@ public class JPATest {
     }
 
     /**
+     *
+     *
      * 同 hibernate 中 Session 的 refresh 方法.
      */
     @Test
-    public void testRefresh() {
-        Customer customer = entityManager.find(Customer.class, 7);
-        customer = entityManager.find(Customer.class, 7);
+    public void testRefresh() throws InterruptedException {
+        Customer customer = this.entityManager.find(Customer.class, 1);
+        customer = this.entityManager.find(Customer.class, 1);
+        System.out.println("开始");
+        Thread.sleep(10000);
+        this.entityManager.refresh(customer);
+        System.out.println(customer);
 
-        entityManager.refresh(customer);
+
+//        EntityManager em2 = entityManagerFactory.createEntityManager();
+//        EntityTransaction transaction = em2.getTransaction();
+//        transaction.begin();
+//         Customer customer1 = em2.find(Customer.class, 1);
+//          customer1 = em2.find(Customer.class, 1);
+//        System.out.println(em2.contains(customer1));
+//        customer1.setId(2);
+//        System.out.println(em2.contains(customer1));
+//        em2.refresh(customer1);
+//        transaction.commit();
     }
 
     /**
@@ -457,7 +478,7 @@ public class JPATest {
      */
     @Test
     public void testFlush() {
-        Customer customer = entityManager.find(Customer.class, 7);
+        Customer customer = entityManager.find(Customer.class, 1);
         System.out.println(customer);
 
         customer.setLastName("AA");
@@ -578,15 +599,49 @@ public class JPATest {
     @Test
     public void testPersistence() {
         Customer customer = new Customer();
-        customer.setAge(15);
+        customer.setAge(789);
         customer.setBirth(new Date());
         customer.setCreatedTime(new Date());
-        customer.setEmail("bb@163.com");
-        customer.setLastName("BB");
+        customer.setEmail("bb1@163.com");
+        customer.setLastName("ecen");
+        Order order1 = new Order();
+        order1.setOrderName("11-GG-1");
+        order1.setCustomer(customer);
+        Set set = new HashSet();
+        set.add(order1);
+        customer.setOrders(set);
 //		customer.setId(100);
+        entityManager.persist(customer);//保存也会缓存 如果后面不需要用到该对象 应该及时clear释放内存  persit返回的还是原来的对象
+        System.out.println(customer.getOrders());
+//        System.out.println(customer.getId());
+//        entityManager.clear();
+//        Customer customer1 = entityManager.find(Customer.class, 24);
+//        System.out.println(customer1);
+//        System.out.println(customer1 ==customer);
+    }
 
-        entityManager.persist(customer);
-        System.out.println(customer.getId());
+    @Test
+    public void testGetSingleCache(){
+        String jpql = "FROM Customer c WHERE c.id = ?";
+
+        Customer customer =
+                (Customer) entityManager.createQuery(jpql).setParameter(1, 24).getSingleResult();
+        System.out.println(customer.getLastName());
+        Customer customer1 = entityManager.find(Customer.class, 24);
+        System.out.println(customer1);
+        customer1.setLastName("55556");
+        entityManager.flush();
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        System.out.println(customer1==customer);
+
+        //在事务提交flush之前clear掉了 不会更改到，如果没有clear 则会被更改
+//        customer1.setLastName("abc");
+//        entityManager.clear();
     }
 
     //类似于 hibernate 中 Session 的 load 方法 第一次查找，若实体不存在会抛异常
@@ -605,12 +660,13 @@ public class JPATest {
     //类似于 hibernate 中 Session 的 get 方法. 未找到返回null，关系eager左外连接，lazy用到查两次
     @Test
     public void testFind() {
-        Customer customer = entityManager.find(Customer.class, 1);
+        Customer customer = entityManager.find(Customer.class, 28);
         System.out.println("-------------------------------------");
-
+        Customer customer1 = customer;
+        customer.setLastName("111111131313");
         System.out.println(customer);
-        Set<Order> orders = customer.getOrders();
-        System.out.println(orders);
+//        Set<Order> orders = customer.getOrders();
+//        System.out.println(orders);
     }
 
     @Test
